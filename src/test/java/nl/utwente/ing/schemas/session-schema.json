@@ -1,1 +1,23 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "sessionID": {
+      "$id": "/properties/sessionID",
+      "type": "string",
+      "title": "The Sessionid Schema",
+      "default": "",
+      "examples": [
+        "test"
+      ]
+    },
+    "creationDate": {
+      "$id": "/properties/creationDate",
+      "type": "integer",
+      "title": "The Creation date Schema",
+      "default": 0,
+      "examples": [
+        1519571447948
+      ]
+    }
+  }
+}
