@@ -24,6 +24,7 @@
  */
 package nl.utwente.ing;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,7 +53,7 @@ public class CategoryTests {
     public void getTestSession() {
         if (sessionId == null) {
             String response = given()
-                    .get("api/v1/categories")
+                    .get("api/v1/sessions")
                     .then()
                     .assertThat()
                     .statusCode(200)
@@ -65,10 +66,17 @@ public class CategoryTests {
     }
 
     /**
-     * Deletes the category used for testing before running every test to avoid errors due to duplicate entries.
+     * Deletes the category used for testing before and after running every test.
+     * This avoids duplicate entries and leftover entries in the database after running tests.
      */
     @Before
+    @After
     public void deleteTestCategory() {
+        // Make sure that the session exists in case deleteTestCategory() is called before getTestSession().
+        if (sessionId == null) {
+            getTestSession();
+        }
+
         given()
                 .header("WWW_Authenticate", sessionId)
                 .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
@@ -200,4 +208,167 @@ public class CategoryTests {
         assertEquals(categoryName, TEST_CATEGORY_NAME);
     }
 
+    /**
+     * Performs a GET request on the categories/{categoryId} endpoint.
+     *
+     * This test uses a valid session ID and tests whether a non-existent category returns a status of 404 Not Found.
+     */
+    @Test
+    public void validSessionByInvalidIdGetTest() {
+        // Unlike validSessionByIdGetTest() we do not create the test category in this case.
+        // categoriesPostTest();
+
+        given()
+                .header("WWW_Authenticate", sessionId)
+                .get(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a GET request on the categories/{categoryId} endpoint.
+     *
+     * This test uses an invalid session ID and checks whether the resulting status code is 401 Unauthorized.
+     */
+    @Test
+    public void invalidSessionByIdGetTest() {
+        // Use the /categories POST test to create the test category.
+        categoriesPostTest();
+
+        given()
+                .get(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .statusCode(401);
+    }
+
+    /*
+     *  Tests related to PUT requests on the /categories/{categoryId} API endpoint.
+     *  API Documentation: https://app.swaggerhub.com/apis/djhuistra/INGHonours/1.0.1#/categories/put_categories__categoryId_
+     */
+
+    /**
+     * Performs a PUT request on the categories/{categoryId} endpoint.
+     *
+     * This test uses a valid session ID and tests whether a previously created category can be updated with a PUT request.
+     */
+    @Test
+    public void validSessionByIdPutTest() {
+        // Use the /categories POST test to create the test category.
+        categoriesPostTest();
+
+        final String newCategoryName = "validSessionByIdPutTest() Updated Name";
+
+        String categoryName = given()
+                .header("WWW_Authenticate", sessionId)
+                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, newCategoryName))
+                .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .body(matchesJsonSchema(CATEGORY_SCHEMA_PATH.toAbsolutePath().toUri()))
+                .statusCode(200)
+                .extract()
+                .response()
+                .getBody()
+                .jsonPath()
+                .getString("name");
+
+        assertEquals(categoryName, newCategoryName);
+    }
+
+    /**
+     * Performs a PUT request on the categories/{categoryId} endpoint.
+     *
+     * This test uses a valid session ID and tests whether a non-existent category returns a status of 404 Not Found.
+     */
+    @Test
+    public void validSessionByInvalidIdPutTest() {
+        // Unlike validSessionByIdPutTest() we do not create the test category in this case.
+        // categoriesPostTest();
+
+        given()
+                .header("WWW_Authenticate", sessionId)
+                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
+                .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a PUT request on the categories/{categoryId} endpoint.
+     *
+     * This test uses an invalid session ID and checks whether the resulting status code is 401 Unauthorized.
+     */
+    @Test
+    public void invalidSessionByIdPutTest() {
+        // Use the /categories POST test to create the test category.
+        categoriesPostTest();
+
+        given()
+                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
+                .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .statusCode(401);
+    }
+
+    /*
+     *  Tests related to DELETE requests on the /categories/{categoryId} API endpoint.
+     *  API Documentation: https://app.swaggerhub.com/apis/djhuistra/INGHonours/1.0.1#/categories/delete_categories__categoryId_
+     */
+
+    /**
+     * Performs a DELETE request on the categories/{categoryId} endpoint.
+     *
+     * This test uses a valid session ID and tests whether a previously created category can be updated with a PUT request.
+     */
+    @Test
+    public void validSessionByIdDeleteTest() {
+        // Use the /categories POST test to create the test category.
+        categoriesPostTest();
+
+        given()
+                .header("WWW_Authenticate", sessionId)
+                .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .statusCode(204);
+    }
+
+    /**
+     * Performs a DELETE request on the categories/{categoryId} endpoint.
+     *
+     * This test uses a valid session ID and tests whether a non-existent category returns a status of 404 Not Found.
+     */
+    @Test
+    public void validSessionByInvalidIdDeleteTest() {
+        // Unlike validSessionByIdDeleteTest() we do not create the test category in this case.
+        // categoriesPostTest();
+
+        given()
+                .header("WWW_Authenticate", sessionId)
+                .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a DELETE request on the categories/{categoryId} endpoint.
+     *
+     * This test uses an invalid session ID and checks whether the resulting status code is 401 Unauthorized.
+     */
+    @Test
+    public void invalidSessionByIdDeleteTest() {
+        // Use the /categories POST test to create the test category.
+        categoriesPostTest();
+
+        given()
+                .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .then()
+                .assertThat()
+                .statusCode(401);
+    }
 }
