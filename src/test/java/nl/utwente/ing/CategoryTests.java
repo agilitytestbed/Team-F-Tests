@@ -39,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 public class CategoryTests {
 
     private static final Path CATEGORY_LIST_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category-list.json");
-    private static final Path CATEGORY_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category-list.json");
+    private static final Path CATEGORY_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category.json");
 
     private static final int TEST_CATEGORY_ID = 66828978;
     private static final String TEST_CATEGORY_NAME = "Test Category";
@@ -52,16 +52,7 @@ public class CategoryTests {
     @Before
     public void getTestSession() {
         if (sessionId == null) {
-            String response = given()
-                    .get("api/v1/sessions")
-                    .then()
-                    .assertThat()
-                    .statusCode(200)
-                    .extract()
-                    .response()
-                    .asString();
-
-            sessionId = Integer.parseInt(response);
+            sessionId = Util.getSessionID();
         }
     }
 
@@ -79,7 +70,6 @@ public class CategoryTests {
 
         given()
                 .header("WWW_Authenticate", sessionId)
-                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
                 .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
                 .assertThat()
