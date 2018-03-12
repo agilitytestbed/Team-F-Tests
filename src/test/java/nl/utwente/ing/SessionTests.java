@@ -26,19 +26,15 @@ package nl.utwente.ing;
 
 import org.junit.Test;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import static io.restassured.RestAssured.get;
-import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchema;
-
 public class SessionTests {
 
-    private static Path SESSION_SCHEMA = Paths.get("src/test/java/nl/utwente/ing/schemas/session-schema.json");
-
+    /**
+     * Performs a GET request on the sessions endpoint.
+     * <p>
+     * This test checks whether the endpoint is reachable and returns a valid integer.
+     */
     @Test
     public void validSessionBodyTest() {
-        get("api/v1/sessions").then().assertThat().body(matchesJsonSchema(SESSION_SCHEMA.toAbsolutePath().toUri()))
-                .statusCode(200);
+        Util.getSessionID();
     }
 }

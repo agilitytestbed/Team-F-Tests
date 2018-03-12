@@ -1,0 +1,31 @@
+{
+  "title": "Transaction",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "The unique identifier for the transaction",
+      "type": "integer"
+    },
+    "date": {
+      "description": "The date on which this transaction occurred",
+      "type": "string"
+    },
+    "amount": {
+      "description": "The amount of this transaction",
+      "type": "number"
+    },
+    "external-iban": {
+      "type": "string"
+    },
+    "type": {
+      "description": "The type of this transaction (either deposit or withdrawal)",
+      "type": "string",
+      "enum": ["deposit", "withdrawal"]
+    },
+    "category": {
+      "type": "object",
+      "$ref": "file:src/test/java/nl/utwente/ing/schemas/transactions/transaction.json"
+    }
+  },
+  "required": ["id", "date", "amount", "external-iban", "type", "category"]
+}
