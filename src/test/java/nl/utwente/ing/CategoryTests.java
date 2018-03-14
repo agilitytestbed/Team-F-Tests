@@ -69,7 +69,7 @@ public class CategoryTests {
         }
 
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
                 .assertThat()
@@ -89,7 +89,7 @@ public class CategoryTests {
     @Test
     public void validSessionCategoriesGetTest() {
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .get("api/v1/categories")
                 .then()
                 .assertThat()
@@ -124,7 +124,7 @@ public class CategoryTests {
     @Test
     public void categoriesPostTest() {
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
                 .post("api/v1/categories")
                 .then()
@@ -158,7 +158,7 @@ public class CategoryTests {
     @Test
     public void invalidFormatCategoriesPostTest() {
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .body(String.format("{\"invalid\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
                 .post("api/v1/categories")
                 .then()
@@ -183,7 +183,7 @@ public class CategoryTests {
         categoriesPostTest();
 
         String categoryName = given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .get(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
                 .assertThat()
@@ -209,7 +209,7 @@ public class CategoryTests {
         // categoriesPostTest();
 
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .get(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
                 .assertThat()
@@ -251,7 +251,7 @@ public class CategoryTests {
         final String newCategoryName = "validSessionByIdPutTest() Updated Name";
 
         String categoryName = given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, newCategoryName))
                 .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
@@ -278,7 +278,7 @@ public class CategoryTests {
         // categoriesPostTest();
 
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
                 .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
@@ -320,7 +320,7 @@ public class CategoryTests {
         categoriesPostTest();
 
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
                 .assertThat()
@@ -338,7 +338,7 @@ public class CategoryTests {
         // categoriesPostTest();
 
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
                 .then()
                 .assertThat()

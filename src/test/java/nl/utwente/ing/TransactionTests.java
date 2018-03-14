@@ -58,7 +58,7 @@ public class TransactionTests {
         }
 
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .delete(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID))
                 .then()
                 .assertThat()
@@ -78,7 +78,7 @@ public class TransactionTests {
     @Test
     public void validSessionValidTransactionPostTest() {
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .body(String.format("{\"id\": %d, " +
                         "\"date\": \"1889-04-20T19:45:04.030Z\", " +
                         "\"amount\": 0, " +
@@ -123,7 +123,7 @@ public class TransactionTests {
     @Test
     public void validSessionInvalidTransactionPostTest() {
         given()
-                .header("WWW_Authenticate", sessionId)
+                .header("X-session-ID", sessionId)
                 .body(String.format("{\"id\": %d, " +
                                 "\"data\": \"1889-04-20T19:45:04.030Z\", " +
                                 "\"category\": {\"id\": 0, \"name\": \"string\"}}",
