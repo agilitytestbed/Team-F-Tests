@@ -47,7 +47,7 @@ public class CategoryTests {
     private static Integer sessionId;
 
     /**
-     * Makes sure all tests share the same session ID by setting sessionId if does not exist yet.
+     * Makes sure all tests share the same session ID by setting sessionId if it does not exist yet.
      */
     @Before
     public void getTestSession() {
