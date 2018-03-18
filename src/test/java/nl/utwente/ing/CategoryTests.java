@@ -41,8 +41,9 @@ public class CategoryTests {
     private static final Path CATEGORY_LIST_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category-list.json");
     private static final Path CATEGORY_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category.json");
 
-    private static final int TEST_CATEGORY_ID = 66828978;
+    private static Integer testCategoryId;
     private static final String TEST_CATEGORY_NAME = "Test Category";
+    private static final int INVALID_CATEGORY_ID = -26_07_1581;
 
     private static Integer sessionId;
 
@@ -68,12 +69,14 @@ public class CategoryTests {
             getTestSession();
         }
 
+        // No test category has been made yet, thus no need to delete anything.
+        if (testCategoryId == null) {
+            return;
+        }
+
         given()
                 .header("X-session-ID", sessionId)
-                .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
-                .then()
-                .assertThat()
-                .statusCode(204);
+                .delete(String.format("api/v1/categories/%d", testCategoryId));
     }
 
     /*
@@ -123,14 +126,19 @@ public class CategoryTests {
      */
     @Test
     public void categoriesPostTest() {
-        given()
+        testCategoryId = given()
                 .header("X-session-ID", sessionId)
-                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
+                .body(String.format("{\"name\": \"%s\"}", TEST_CATEGORY_NAME))
                 .post("api/v1/categories")
                 .then()
                 .assertThat()
                 .body(matchesJsonSchema(CATEGORY_SCHEMA_PATH.toAbsolutePath().toUri()))
-                .statusCode(201);
+                .statusCode(201)
+                .extract()
+                .response()
+                .getBody()
+                .jsonPath()
+                .getInt("id");
     }
 
     /**
@@ -142,7 +150,7 @@ public class CategoryTests {
     @Test
     public void invalidSessionCategoriesPostTest() {
         given()
-                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
+                .body(String.format("{\"name\": \"%s\"}", TEST_CATEGORY_NAME))
                 .post("api/v1/categories")
                 .then()
                 .assertThat()
@@ -159,7 +167,7 @@ public class CategoryTests {
     public void invalidFormatCategoriesPostTest() {
         given()
                 .header("X-session-ID", sessionId)
-                .body(String.format("{\"invalid\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
+                .body(String.format("{\"invalid\": \"%s\"}", TEST_CATEGORY_NAME))
                 .post("api/v1/categories")
                 .then()
                 .assertThat()
@@ -184,7 +192,7 @@ public class CategoryTests {
 
         String categoryName = given()
                 .header("X-session-ID", sessionId)
-                .get(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .get(String.format("api/v1/categories/%d", testCategoryId))
                 .then()
                 .assertThat()
                 .body(matchesJsonSchema(CATEGORY_SCHEMA_PATH.toAbsolutePath().toUri()))
@@ -210,7 +218,7 @@ public class CategoryTests {
 
         given()
                 .header("X-session-ID", sessionId)
-                .get(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .get(String.format("api/v1/categories/%d", INVALID_CATEGORY_ID))
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -227,7 +235,7 @@ public class CategoryTests {
         categoriesPostTest();
 
         given()
-                .get(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .get(String.format("api/v1/categories/%d", testCategoryId))
                 .then()
                 .assertThat()
                 .statusCode(401);
@@ -252,8 +260,8 @@ public class CategoryTests {
 
         String categoryName = given()
                 .header("X-session-ID", sessionId)
-                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, newCategoryName))
-                .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .body(String.format("{\"name\": \"%s\"}", newCategoryName))
+                .put(String.format("api/v1/categories/%d", testCategoryId))
                 .then()
                 .assertThat()
                 .body(matchesJsonSchema(CATEGORY_SCHEMA_PATH.toAbsolutePath().toUri()))
@@ -279,8 +287,8 @@ public class CategoryTests {
 
         given()
                 .header("X-session-ID", sessionId)
-                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
-                .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .body(String.format("{\"name\": \"%s\"}", TEST_CATEGORY_NAME))
+                .put(String.format("api/v1/categories/%d", INVALID_CATEGORY_ID))
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -297,8 +305,8 @@ public class CategoryTests {
         categoriesPostTest();
 
         given()
-                .body(String.format("{\"id\": %d, \"name\": \"%s\"}", TEST_CATEGORY_ID, TEST_CATEGORY_NAME))
-                .put(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .body(String.format("{\"name\": \"%s\"}", TEST_CATEGORY_NAME))
+                .put(String.format("api/v1/categories/%d", testCategoryId))
                 .then()
                 .assertThat()
                 .statusCode(401);
@@ -321,7 +329,7 @@ public class CategoryTests {
 
         given()
                 .header("X-session-ID", sessionId)
-                .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .delete(String.format("api/v1/categories/%d", testCategoryId))
                 .then()
                 .assertThat()
                 .statusCode(204);
@@ -339,7 +347,7 @@ public class CategoryTests {
 
         given()
                 .header("X-session-ID", sessionId)
-                .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .delete(String.format("api/v1/categories/%d", INVALID_CATEGORY_ID))
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -356,7 +364,7 @@ public class CategoryTests {
         categoriesPostTest();
 
         given()
-                .delete(String.format("api/v1/categories/%d", TEST_CATEGORY_ID))
+                .delete(String.format("api/v1/categories/%d", testCategoryId))
                 .then()
                 .assertThat()
                 .statusCode(401);
