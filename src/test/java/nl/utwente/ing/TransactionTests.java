@@ -52,6 +52,8 @@ public class TransactionTests {
     private static final String TEST_CATEGORY_1 = "{\"id\": 0, \"name\": \"string\"}";
     private static final String TEST_CATEGORY_2 = "{\"id\": 1, \"name\": \"work\"}";
 
+    private static final int TEST_CATEGORY_ID_INVALID = 123123;
+
     private static final String TEST_TRANSACTION_1 = String.format("{\"id\": %d, " +
                     "\"date\": \"1889-04-20T19:45:04.030Z\", " +
                     "\"amount\": 0, " +
@@ -119,7 +121,7 @@ public class TransactionTests {
     /**
      * Performs a GET request on the transactions endpoint.
      *
-     * This test uses a valid session ID and tests whether the response is formatted according to the specification.
+     * This test uses a valid session ID to test whether the response is formatted according to the specification.
      */
     @Test
     public void validSessionTransactionsGetTest() {
@@ -140,9 +142,9 @@ public class TransactionTests {
     }
 
     /**
-     * Performs a GET request on the transactions endpoint with a specified offset.
+     * Performs a GET request on the transactions endpoint.
      *
-     * This test uses a valid session ID and tests whether the server handles the offset parameter correctly.
+     * This test uses a valid session ID to test whether the server handles the offset parameter correctly.
      */
     @Test
     public void validSessionTransactionsGetOffsetTest() {
@@ -174,9 +176,9 @@ public class TransactionTests {
     }
 
     /**
-     * Performs a GET request on the transactions endpoint with a specified category.
+     * Performs a GET request on the transactions endpoint.
      *
-     * This test uses a valid session ID and tests whether the server handles the category parameter correctly.
+     * This test uses a valid session ID to test whether the server handles the category parameter correctly.
      */
     @Test
     public void validSessionTransactionsGetCategoryTest() {
@@ -203,9 +205,9 @@ public class TransactionTests {
     }
 
     /**
-     * Performs a GET request on the transactions endpoint with a specified limit.
+     * Performs a GET request on the transactions endpoint.
      *
-     * This test uses a valid session ID and tests whether the server handles the category parameter correctly.
+     * This test uses a valid session ID to test whether the server handles the category parameter correctly.
      */
     @Test
     public void validSessionTransactionsGetLimitTest() {
@@ -250,7 +252,7 @@ public class TransactionTests {
     /**
      * Performs a GET request on the transactions/{transactionId} endpoint.
      *
-     * This test uses a valid session ID and tests whether a previously created transaction can be fetched and is 
+     * This test uses a valid session ID to test whether a previously created transaction can be fetched and is
      * formatted according to the specification.
      */
     @Test
@@ -273,6 +275,36 @@ public class TransactionTests {
         assertThat(TEST_TRANSACTION_1, equalTo(transaction));
     }
 
+    /**
+     * Performs a GET request on the transactions/{transactionId} endpoint.
+     *
+     * This test uses a valid session ID with an invalid transaction ID to test whether the server responds with the
+     * correct response code.
+     */
+    @Test
+    public void validSessionInvalidTransactionIdGetTest() {
+        given()
+                .header("X-session-ID", sessionId)
+                .get(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID_1))
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a GET request on the transactions/{transactionId} endpoint.
+     *
+     * This test uses an invalid session ID to test whether the server responds with the correct response code.
+     */
+    @Test
+    public void invalidSessionTransactionIdGetTest() {
+        given()
+                .get(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID_1))
+                .then()
+                .assertThat()
+                .statusCode(401);
+    }
+
     /*
      *  Tests related to POST requests on the /transactions API endpoint.
      *  API Documentation: https://app.swaggerhub.com/apis/djhuistra/INGHonours/1.0.1#/transactions/getTransactions
@@ -281,7 +313,7 @@ public class TransactionTests {
     /**
      * Performs a POST request on the transactions endpoint.
      *
-     * This test uses a valid session ID and tests whether it is possible to create a new transaction.
+     * This test uses a valid session ID to test whether it is possible to create a new transaction.
      */
     @Test
     public void validSessionValidTransactionPostTest() {
@@ -297,10 +329,10 @@ public class TransactionTests {
     /**
      * Performs a POST request on the transactions endpoint.
      *
-     * This test uses a invalid session ID and tests whether the status code is 401 Unauthorized.
+     * This test uses a invalid session ID to test whether the status code is 401 Unauthorized.
      */
     @Test
-    public void invalidSessionValidCategoriesPostTest() {
+    public void invalidSessionValidTransactionPostTest() {
         given()
                 .body(TEST_TRANSACTION_1)
                 .post("api/v1/transactions")
@@ -312,7 +344,7 @@ public class TransactionTests {
     /**
      * Performs a POST request on the transactions endpoint.
      *
-     * This test uses a valid session ID and tests whether it is possible to create a new invalid transaction.
+     * This test uses a valid session ID to test whether it is possible to create a new invalid transaction.
      */
     @Test
     public void validSessionInvalidTransactionPostTest() {
@@ -323,5 +355,229 @@ public class TransactionTests {
                 .then()
                 .assertThat()
                 .statusCode(405);
+    }
+
+    /*
+     *  Tests related to PUT requests on the /transactions/{transactionId} API endpoint.
+     *  API Documentation: https://app.swaggerhub.com/apis/djhuistra/INGHonours/1.0.1#/transactions/putTransactions
+     */
+
+    /**
+     * Performs a PUT request on the transactions/{transactionId} endpoint
+     *
+     * This test uses a valid session ID with a valid transaction to test whether the specified transaction is
+     * updated.
+     */
+    @Test
+    public void validSessionValidTransactionPutTest() {
+        //Insert valid transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        String response = given()
+                .header("X-session-ID", sessionId)
+                .body(TEST_TRANSACTION_2)
+                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .contentType(ContentType.JSON)
+                .body(matchesJsonSchema(TRANSACTION_SCHEMA_PATH))
+                .extract()
+                .body()
+                .asString();
+
+        assertThat(TEST_TRANSACTION_2, equalTo(response));
+    }
+
+    /**
+     * Performs a PUT request on the transactions/{transactionId} endpoint
+     *
+     * This test uses a valid session ID with an invalid transaction to test whether the server gives the correct
+     * response.
+     */
+    @Test
+    public void validSessionInvalidTransactionPutTest() {
+        //Insert valid transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        given()
+                .header("X-session-ID", sessionId)
+                .body(TEST_TRANSACTION_INVALID)
+                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(405);
+    }
+
+    /**
+     * Performs a PUT request on the transactions/{transactionId} endpoint
+     *
+     * This test uses an invalid session ID to test whether the server gives the correct response.
+     */
+    @Test
+    public void invalidSessionTransactionPutTest() {
+        given()
+                .body(TEST_TRANSACTION_1)
+                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(401);
+    }
+
+    /**
+     * Performs a PUT request on the transactions/{transactionId} endpoint
+     *
+     * This test uses an invalid session ID to test whether the server gives the correct response.
+     */
+    @Test
+    public void validSessionInvalidTransactionIdPutTest() {
+        given()
+                .header("X-session-ID", sessionId)
+                .body(TEST_TRANSACTION_1)
+                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /*
+     *  Tests related to DELETE requests on the /transactions/{transactionId} API endpoint.
+     *  API Documentation: https://app.swaggerhub.com/apis/djhuistra/INGHonours/1.0.1#/transactions/deleteTransactions
+     */
+
+    /**
+     * Performs a DELETE request on the transactions/{transactionId} endpoint
+     *
+     * This test uses a valid session ID with a valid transaction ID to test whether the specified transaction is
+     * deleted.
+     */
+    @Test
+    public void validSessionValidTransactionIdDeleteTest() {
+        // Insert a transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        given()
+                .header("X-session-id", sessionId)
+                .delete("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(204);
+    }
+
+    /**
+     * Performs a DELETE request on the transactions/{transactionId} endpoint
+     *
+     * This test uses an invalid session ID with a valid transaction ID to test whether the server corresponds with
+     * the correct response code.
+     */
+    @Test
+    public void invalidSessionTransactionDeleteTest() {
+        //Insert a transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        given()
+                .delete("X-session-id", sessionId)
+                .then()
+                .assertThat()
+                .statusCode(401);
+    }
+
+    /**
+     * Performs a DELETE request on the transactions/{transactionId} endpoint
+     *
+     * This test uses a valid session ID with an invalid transaction ID to test whether the server corresponds with
+     * the correct response code.
+     */
+    @Test
+    public void validSessionInvalidTransactionIdDeleteTest() {
+        given()
+                .header("X-session-id", sessionId)
+                .delete("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /*
+     *  Tests related to PATCH requests on the /transactions/{transactionId}/category API endpoint.
+     *  API Documentation: https://app.swaggerhub.com/apis/djhuistra/INGHonours/1.0.1#/transactions/category
+     */
+
+    /**
+     * Performs a PATCH request on the transactions/{transactionId}/category endpoint
+     *
+     * This test uses a valid session ID with a valid transaction ID and a valid category ID to test whether the
+     * specified transaction is deleted.
+     */
+    @Test
+    public void validSessionValidTransactionIdValidCategoryIdPatchTest() {
+        // Insert a transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        String category = given()
+                .header("X-session-id", sessionId)
+                .body(CategoryTests.TEST_CATEGORY_ID)
+                .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(matchesJsonSchema(TRANSACTION_SCHEMA_PATH))
+                .extract()
+                .jsonPath()
+                .get("$.category.id");
+
+        assertThat(category, equalTo(CategoryTests.TEST_CATEGORY_ID));
+    }
+
+    /**
+     * Performs a PATCH request on the transactions/{transactionId}/category endpoint
+     *
+     * This test uses an invalid session ID to test whether the server responds with the correct response code.
+     */
+    @Test
+    public void invalidSessionPatchTest() {
+        given()
+                .body(CategoryTests.TEST_CATEGORY_ID)
+                .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(401);
+    }
+
+    /**
+     * Performs a PATCH request on the transactions/{transactionId}/category endpoint
+     *
+     * This test uses a valid session ID with an invalid category ID to test whether the server responds with the
+     * correct response code.
+     */
+    @Test
+    public void validSessionValidTransactionIdInvalidCategoryIdPatchTest() {
+        // Insert a transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        given()
+                .header("X-session-id", sessionId)
+                .body(TEST_CATEGORY_ID_INVALID)
+                .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a PATCH request on the transactions/{transactionId}/category endpoint
+     *
+     * This test uses a valid session ID with an invalid transaction ID to test whether the server responds with the
+     * correct response code.
+     */
+    @Test
+    public void validSessionInvalidTransactionIdValidCategoryIdPatchTest() {
+    given()
+            .header("X-session-id", sessionId)
+            .body(CategoryTests.TEST_CATEGORY_ID)
+            .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+            .then()
+            .assertThat()
+            .statusCode(404);
     }
 }
