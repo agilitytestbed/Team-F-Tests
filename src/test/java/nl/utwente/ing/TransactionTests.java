@@ -52,6 +52,7 @@ public class TransactionTests {
     private static final String TEST_CATEGORY_1 = "{\"id\": 0, \"name\": \"string\"}";
     private static final String TEST_CATEGORY_2 = "{\"id\": 1, \"name\": \"work\"}";
 
+    private static final int TEST_CATEGORY_ID = 66828978;
     private static final int TEST_CATEGORY_ID_INVALID = 123123;
 
     private static final String TEST_TRANSACTION_1 = String.format("{\"id\": %d, " +
@@ -516,7 +517,7 @@ public class TransactionTests {
 
         String category = given()
                 .header("X-session-id", sessionId)
-                .body(CategoryTests.TEST_CATEGORY_ID)
+                .body(TEST_CATEGORY_ID)
                 .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
                 .then()
                 .assertThat()
@@ -526,7 +527,7 @@ public class TransactionTests {
                 .jsonPath()
                 .get("$.category.id");
 
-        assertThat(category, equalTo(CategoryTests.TEST_CATEGORY_ID));
+        assertThat(category, equalTo(TEST_CATEGORY_ID));
     }
 
     /**
@@ -537,7 +538,7 @@ public class TransactionTests {
     @Test
     public void invalidSessionPatchTest() {
         given()
-                .body(CategoryTests.TEST_CATEGORY_ID)
+                .body(TEST_CATEGORY_ID)
                 .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
                 .then()
                 .assertThat()
@@ -574,7 +575,7 @@ public class TransactionTests {
     public void validSessionInvalidTransactionIdValidCategoryIdPatchTest() {
     given()
             .header("X-session-id", sessionId)
-            .body(CategoryTests.TEST_CATEGORY_ID)
+            .body(TEST_CATEGORY_ID)
             .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
             .then()
             .assertThat()
