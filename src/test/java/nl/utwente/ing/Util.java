@@ -24,9 +24,15 @@
  */
 package nl.utwente.ing;
 
-import static io.restassured.RestAssured.get;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static io.restassured.RestAssured.post;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchema;
 
 public class Util {
+
+    private static final Path SESSION_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/session.json");
 
     /**
      * Accesses the session API endpoint to generate a new session ID.
@@ -34,14 +40,15 @@ public class Util {
      * @return a newly generated session ID
      */
     public static int getSessionID() {
-        String result = get("api/v1/sessions")
+        return post("api/v1/sessions")
                 .then()
                 .assertThat()
+                .body(matchesJsonSchema(SESSION_SCHEMA_PATH.toAbsolutePath().toUri()))
                 .statusCode(200)
                 .extract()
                 .response()
-                .asString();
-
-        return Integer.parseInt(result);
+                .getBody()
+                .jsonPath()
+                .getInt("session_id");
     }
 }

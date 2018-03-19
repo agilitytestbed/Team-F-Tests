@@ -312,6 +312,25 @@ public class CategoryTests {
                 .statusCode(401);
     }
 
+    /**
+     * Performs a PUT request on the categories/{categoryId} endpoint.
+     *
+     * This test uses an invalid body and checks whether the resulting status code is 405 Method Not Allowed.
+     */
+    @Test
+    public void validSessionInvalidBodyByIdPutTest() {
+        // Use the /categories POST test to create the test category.
+        categoriesPostTest();
+
+        given()
+                .header("X-session-ID", sessionId)
+                .body("{\"invalid\"}")
+                .put(String.format("api/v1/categories/%d", testCategoryId))
+                .then()
+                .assertThat()
+                .statusCode(405);
+    }
+
     /*
      *  Tests related to DELETE requests on the /categories/{categoryId} API endpoint.
      *  API Documentation: https://app.swaggerhub.com/apis/djhuistra/INGHonours/1.0.1#/categories/delete_categories__categoryId_
