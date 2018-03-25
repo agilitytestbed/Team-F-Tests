@@ -37,6 +37,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchema;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public class TransactionTests {
@@ -46,37 +47,36 @@ public class TransactionTests {
     private static final URI TRANSACTION_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas" +
                     "/transactions/transaction.json").toAbsolutePath().toUri();
 
-    private static final int TEST_TRANSACTION_ID_1 = 68796973;
-    private static final int TEST_TRANSACTION_ID_2 = 23890471;
+    public static Integer sessionId;
 
-    private static final String TEST_CATEGORY_1 = "{\"id\": 0, \"name\": \"string\"}";
-    private static final String TEST_CATEGORY_2 = "{\"id\": 1, \"name\": \"work\"}";
+    private static Integer testTransactionId;
+    private static Integer clutterTransactionId;
 
-    private static final int TEST_CATEGORY_ID = 66828978;
-    private static final int TEST_CATEGORY_ID_INVALID = 123123;
+    public static Integer testCategoryId;
+    private static final String TEST_CATEGORY_NAME = "TransactionTests Test Category";
 
-    private static final String TEST_TRANSACTION_1 = String.format("{\"id\": %d, " +
+    private static final String TEST_TRANSACTION_INPUT_FORMAT =
+                    "{" +
                     "\"date\": \"1889-04-20T19:45:04.030Z\", " +
                     "\"amount\": 0, " +
-                    "\"external-iban\": \"string\", " +
+                    "\"externalIBAN\": \"string\", " +
                     "\"type\": \"deposit\", " +
-                    "\"category\": " + TEST_CATEGORY_1 + "}",
-                    TEST_TRANSACTION_ID_1);
-    private static final String TEST_TRANSACTION_2 = String.format("{\"id\": %d, " +
-                    "\"date\": \"1889-04-20T19:45:04.030Z\", " +
-                    "\"amount\": 10, " +
-                    "\"external-iban\": \"strings\", " +
-                    "\"type\": \"withdrawal\", " +
-                    "\"category\": " + TEST_CATEGORY_2 + "}",
-            TEST_TRANSACTION_ID_2);
-    private static final String TEST_TRANSACTION_INVALID = String.format("{\"id\": %d, " +
-                    "\"data\": \"1889-04-20T19:45:04.030Z\", " +
-                    "\"category\": " + TEST_CATEGORY_1 + "}",
-            TEST_TRANSACTION_ID_1);
+                    "\"category\": {" +
+                    "    \"id\": %d," +
+                    "    \"name\": \"" + TEST_CATEGORY_NAME + "\""+
+                    "  }" +
+                    "}";
+    private static final String TEST_CATEGORY_INPUT_FORMAT = "{\"category_id\": %d}";
+
+    private static final String TEST_TRANSACTION_INVALID =
+            "{" +
+            "\"date\": \"1889-04-20T19:45:04.030Z\", " +
+            "\"amount\": zero, " +
+            "\"extornalIBON\": \"string\", " +
+            "\"type\": \"deposit\" " +
+            "}";
 
     private static final int TEST_OFFSET_NUMBER = 1;
-
-    private static Integer sessionId;
 
     /**
      * Makes sure all tests share the same session ID by setting sessionId if it does not exist yet.
@@ -89,29 +89,42 @@ public class TransactionTests {
     }
 
     /**
+     * Makes sure all tests share the same category by setting categoryId if it does not exist yet.
+     */
+    @Before
+    public void getTestCategory() {
+        if (sessionId == null) {
+            getTestSession();
+        }
+
+        if (testCategoryId == null) {
+            testCategoryId = Util.createTestCategory(TEST_CATEGORY_NAME, sessionId);
+        }
+    }
+
+    /**
      * Deletes the transaction used for testing before and after running every test.
      * This avoids duplicate entries and leftover entries in the database after running tests.
      */
     @Before
     @After
-    public void deleteTestTransaction() {
+    public void deleteTestTransactions() {
         if (sessionId == null) {
             getTestSession();
         }
 
-        given()
-                .header("X-session-ID", sessionId)
-                .delete(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID_1))
-                .then()
-                .assertThat()
-                .statusCode(204);
+        // No test transaction has been made yet, thus no need to delete anything.
+        if (testTransactionId != null) {
+            given()
+                    .header("X-session-ID", sessionId)
+                    .delete(String.format("api/v1/transactions/%d", testTransactionId));
+        }
 
-        given()
-                .header("X-session-ID", sessionId)
-                .delete(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID_2))
-                .then()
-                .assertThat()
-                .statusCode(204);
+        if (clutterTransactionId != null) {
+            given()
+                    .header("X-session-ID", sessionId)
+                    .delete(String.format("api/v1/transactions/%d", clutterTransactionId));
+        }
     }
 
     /*
@@ -152,14 +165,33 @@ public class TransactionTests {
         // Insert test transaction 1.
         validSessionValidTransactionPostTest();
 
+        String clutterTransaction = String.format("{" +
+                "\"date\": \"1889-04-20T19:45:04.030Z\", " +
+                "\"amount\": 42, " +
+                "\"externalIBAN\": \"something\", " +
+                "\"type\": \"deposit\", " +
+                "\"category\": {" +
+                "    \"id\": %d," +
+                "    \"name\": \"" + TEST_CATEGORY_NAME + "\"" +
+                "  }" +
+                "}", testCategoryId);
+
         // Insert test transaction 2.
-        given()
+        clutterTransactionId = given()
                 .header("X-session-ID", sessionId)
-                .body(TEST_TRANSACTION_2)
-                .post("api/v1/transactions");
+                .body(clutterTransaction)
+                .post("api/v1/transactions")
+                .then()
+                .assertThat()
+                .statusCode(201)
+                .extract()
+                .response()
+                .getBody()
+                .jsonPath()
+                .getInt("id");
 
         // Send a valid get request with offset 1.
-        String response = given()
+        int responseId = given()
                 .header("X-session-ID", sessionId)
                 .queryParam("offset", 1)
                 .get("api/v1/transactions")
@@ -170,10 +202,11 @@ public class TransactionTests {
                 .statusCode(200)
                 .extract()
                 .response()
-                .body()
-                .path("[0]");
+                .getBody()
+                .jsonPath()
+                .getInt("[0].id");
 
-        assertThat(response, equalTo(TEST_TRANSACTION_2));
+        assertEquals(clutterTransactionId.intValue(), responseId);
     }
 
     /**
@@ -197,7 +230,7 @@ public class TransactionTests {
                 .contentType(ContentType.JSON)
                 .extract()
                 .jsonPath()
-                .getList("$[*].category.name")
+                .getList("$.category.name")
                 .toArray();
 
         for (Object category : categories) {
@@ -261,9 +294,9 @@ public class TransactionTests {
         // Use the /transactions POST test to create the test category.
         validSessionValidTransactionPostTest();
 
-        String transaction = given()
+        int transactionId = given()
                 .header("X-session-ID", sessionId)
-                .get(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID_1))
+                .get(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .body(matchesJsonSchema(TRANSACTION_SCHEMA_PATH))
@@ -271,9 +304,11 @@ public class TransactionTests {
                 .statusCode(200)
                 .extract()
                 .response()
-                .asString();
+                .getBody()
+                .jsonPath()
+                .getInt("id");
 
-        assertThat(TEST_TRANSACTION_1, equalTo(transaction));
+        assertEquals(testTransactionId.intValue(), transactionId);
     }
 
     /**
@@ -286,7 +321,7 @@ public class TransactionTests {
     public void validSessionInvalidTransactionIdGetTest() {
         given()
                 .header("X-session-ID", sessionId)
-                .get(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID_1))
+                .get(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -300,7 +335,7 @@ public class TransactionTests {
     @Test
     public void invalidSessionTransactionIdGetTest() {
         given()
-                .get(String.format("api/v1/transactions/%d", TEST_TRANSACTION_ID_1))
+                .get(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(401);
@@ -318,13 +353,18 @@ public class TransactionTests {
      */
     @Test
     public void validSessionValidTransactionPostTest() {
-        given()
+        testTransactionId = given()
                 .header("X-session-ID", sessionId)
-                .body(TEST_TRANSACTION_1)
+                .body(String.format(TEST_TRANSACTION_INPUT_FORMAT, testCategoryId))
                 .post("api/v1/transactions")
                 .then()
                 .assertThat()
-                .statusCode(201);
+                .statusCode(201)
+                .extract()
+                .response()
+                .getBody()
+                .jsonPath()
+                .getInt("id");
     }
 
     /**
@@ -335,7 +375,7 @@ public class TransactionTests {
     @Test
     public void invalidSessionValidTransactionPostTest() {
         given()
-                .body(TEST_TRANSACTION_1)
+                .body(String.format(TEST_TRANSACTION_INPUT_FORMAT, testCategoryId))
                 .post("api/v1/transactions")
                 .then()
                 .assertThat()
@@ -374,20 +414,28 @@ public class TransactionTests {
         //Insert valid transaction into the API.
         validSessionValidTransactionPostTest();
 
+        String newTransaction = "{" +
+                "\"date\": \"2018-03-25T12:49:04.749Z\", " +
+                "\"amount\": \"213,04\", " +
+                "\"externalIBAN\": \"DIFFERENT\", " +
+                "\"type\": \"deposit\" }";
+
         String response = given()
                 .header("X-session-ID", sessionId)
-                .body(TEST_TRANSACTION_2)
-                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .body(newTransaction)
+                .put(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
                 .body(matchesJsonSchema(TRANSACTION_SCHEMA_PATH))
                 .extract()
-                .body()
-                .asString();
+                .response()
+                .getBody()
+                .jsonPath()
+                .getString("externalIBAN");
 
-        assertThat(TEST_TRANSACTION_2, equalTo(response));
+        assertEquals("DIFFERENT", response);
     }
 
     /**
@@ -404,7 +452,7 @@ public class TransactionTests {
         given()
                 .header("X-session-ID", sessionId)
                 .body(TEST_TRANSACTION_INVALID)
-                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .put(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(405);
@@ -418,8 +466,8 @@ public class TransactionTests {
     @Test
     public void invalidSessionTransactionPutTest() {
         given()
-                .body(TEST_TRANSACTION_1)
-                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .body(String.format(TEST_TRANSACTION_INPUT_FORMAT, testCategoryId))
+                .put(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(401);
@@ -428,14 +476,14 @@ public class TransactionTests {
     /**
      * Performs a PUT request on the transactions/{transactionId} endpoint
      *
-     * This test uses an invalid session ID to test whether the server gives the correct response.
+     * This test uses an invalid transaction ID to test whether the server gives the correct response.
      */
     @Test
     public void validSessionInvalidTransactionIdPutTest() {
         given()
                 .header("X-session-ID", sessionId)
-                .body(TEST_TRANSACTION_1)
-                .put("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .body(String.format(TEST_TRANSACTION_INPUT_FORMAT, testCategoryId))
+                .put(String.format("api/v1/transactions/%d", -42))
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -459,7 +507,7 @@ public class TransactionTests {
 
         given()
                 .header("X-session-id", sessionId)
-                .delete("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .delete(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(204);
@@ -477,7 +525,7 @@ public class TransactionTests {
         validSessionValidTransactionPostTest();
 
         given()
-                .delete("X-session-id", sessionId)
+                .delete(String.format("api/v1/transactions/%d", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(401);
@@ -493,7 +541,7 @@ public class TransactionTests {
     public void validSessionInvalidTransactionIdDeleteTest() {
         given()
                 .header("X-session-id", sessionId)
-                .delete("api/v1/transactions/%d", TEST_TRANSACTION_ID_1)
+                .delete(String.format("api/v1/transactions/%d", -42))
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -515,19 +563,19 @@ public class TransactionTests {
         // Insert a transaction into the API.
         validSessionValidTransactionPostTest();
 
-        String category = given()
+        int categoryId = given()
                 .header("X-session-id", sessionId)
-                .body(TEST_CATEGORY_ID)
-                .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+                .body(String.format(TEST_CATEGORY_INPUT_FORMAT, testCategoryId))
+                .patch(String.format("api/v1/transactions/%d/category", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .body(matchesJsonSchema(TRANSACTION_SCHEMA_PATH))
                 .extract()
                 .jsonPath()
-                .get("$.category.id");
+                .get("category.id");
 
-        assertThat(category, equalTo(TEST_CATEGORY_ID));
+        assertEquals(testCategoryId.intValue(), categoryId);
     }
 
     /**
@@ -538,8 +586,8 @@ public class TransactionTests {
     @Test
     public void invalidSessionPatchTest() {
         given()
-                .body(TEST_CATEGORY_ID)
-                .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+                .body(String.format(TEST_CATEGORY_INPUT_FORMAT, testCategoryId))
+                .patch(String.format("api/v1/transactions/%d/category", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(401);
@@ -558,8 +606,8 @@ public class TransactionTests {
 
         given()
                 .header("X-session-id", sessionId)
-                .body(TEST_CATEGORY_ID_INVALID)
-                .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+                .body(String.format(TEST_CATEGORY_INPUT_FORMAT, -42))
+                .patch(String.format("api/v1/transactions/%d/category", testTransactionId))
                 .then()
                 .assertThat()
                 .statusCode(404);
@@ -575,8 +623,8 @@ public class TransactionTests {
     public void validSessionInvalidTransactionIdValidCategoryIdPatchTest() {
     given()
             .header("X-session-id", sessionId)
-            .body(TEST_CATEGORY_ID)
-            .patch("api/v1/transactions/%d/category", TEST_TRANSACTION_ID_1)
+            .body(String.format(TEST_CATEGORY_INPUT_FORMAT, testCategoryId))
+            .patch(String.format("api/v1/transactions/%d/category", -42))
             .then()
             .assertThat()
             .statusCode(404);

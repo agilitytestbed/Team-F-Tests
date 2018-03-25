@@ -27,6 +27,7 @@ package nl.utwente.ing;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.post;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchema;
 
@@ -50,5 +51,27 @@ public class Util {
                 .getBody()
                 .jsonPath()
                 .getInt("session_id");
+    }
+
+    public static int createTestCategory(String name, int sessionId) {
+        return given()
+                .header("X-session-ID", sessionId)
+                .body(String.format("{\"name\": \"%s\"}", name))
+                .post("api/v1/categories")
+                .then()
+                .assertThat()
+                .body(matchesJsonSchema(CategoryTests.CATEGORY_SCHEMA_PATH.toAbsolutePath().toUri()))
+                .statusCode(201)
+                .extract()
+                .response()
+                .getBody()
+                .jsonPath()
+                .getInt("id");
+    }
+
+    public static void deleteTestCategory(int id, int sessionId) {
+        given()
+                .header("X-session-ID", sessionId)
+                .delete(String.format("api/v1/categories/%d", id));
     }
 }

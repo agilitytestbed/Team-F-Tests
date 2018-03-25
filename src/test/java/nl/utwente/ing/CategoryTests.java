@@ -38,8 +38,8 @@ import static org.junit.Assert.assertEquals;
 
 public class CategoryTests {
 
+    public static final Path CATEGORY_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category.json");
     private static final Path CATEGORY_LIST_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category-list.json");
-    private static final Path CATEGORY_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas/categories/category.json");
 
     private static Integer testCategoryId;
     private static final String TEST_CATEGORY_NAME = "Test Category";
@@ -69,14 +69,11 @@ public class CategoryTests {
             getTestSession();
         }
 
-        // No test category has been made yet, thus no need to delete anything.
-        if (testCategoryId == null) {
-            return;
+        if (testCategoryId != null) {
+            given()
+                    .header("X-session-ID", sessionId)
+                    .delete(String.format("api/v1/categories/%d", testCategoryId));
         }
-
-        given()
-                .header("X-session-ID", sessionId)
-                .delete(String.format("api/v1/categories/%d", testCategoryId));
     }
 
     /*

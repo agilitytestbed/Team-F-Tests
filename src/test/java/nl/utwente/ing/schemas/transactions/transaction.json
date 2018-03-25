@@ -12,9 +12,9 @@
     },
     "amount": {
       "description": "The amount of this transaction",
-      "type": "number"
+      "type": "string"
     },
-    "external-iban": {
+    "externalIBAN": {
       "type": "string"
     },
     "type": {
@@ -24,8 +24,17 @@
     },
     "category": {
       "type": "object",
-      "$ref": "file:src/test/java/nl/utwente/ing/schemas/transactions/transaction.json"
+      "properties": {
+        "id": {
+          "description": "The unique identifier for the category",
+          "type": "integer"
+        },
+        "name": {
+          "description": "The name of the category",
+          "type": "string"
+        }
+      }
     }
   },
-  "required": ["id", "date", "amount", "external-iban", "type", "category"]
+  "required": ["id", "date", "amount", "externalIBAN", "type", "category"]
 }
