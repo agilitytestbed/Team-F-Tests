@@ -41,16 +41,16 @@ public class Util {
      * @return a newly generated session ID
      */
     public static int getSessionID() {
-        return post("api/v1/sessions")
+        return Integer.parseInt(post("api/v1/sessions")
                 .then()
                 .assertThat()
                 .body(matchesJsonSchema(SESSION_SCHEMA_PATH.toAbsolutePath().toUri()))
-                .statusCode(200)
+                .statusCode(201)
                 .extract()
                 .response()
                 .getBody()
                 .jsonPath()
-                .getInt("session_id");
+                .getString("id"));
     }
 
     public static int createTestCategory(String name, int sessionId) {

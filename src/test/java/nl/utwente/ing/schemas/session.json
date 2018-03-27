@@ -2,10 +2,10 @@
   "title": "Session",
   "type": "object",
   "properties": {
-    "session_id": {
+    "id": {
       "description": "The id for the current session",
-      "type": "integer"
+      "type": "string"
     }
   },
-  "required": ["session_id"]
+  "required": ["id"]
 }
