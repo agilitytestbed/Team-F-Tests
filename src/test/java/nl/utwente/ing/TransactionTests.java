@@ -47,7 +47,7 @@ public class TransactionTests {
     private static final URI TRANSACTION_SCHEMA_PATH = Paths.get("src/test/java/nl/utwente/ing/schemas" +
                     "/transactions/transaction.json").toAbsolutePath().toUri();
 
-    public static Integer sessionId;
+    public static String sessionId;
 
     private static Integer testTransactionId;
     private static Integer clutterTransactionId;

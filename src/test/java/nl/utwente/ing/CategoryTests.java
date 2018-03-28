@@ -45,7 +45,7 @@ public class CategoryTests {
     private static final String TEST_CATEGORY_NAME = "Test Category";
     private static final int INVALID_CATEGORY_ID = -26_07_1581;
 
-    private static Integer sessionId;
+    private static String sessionId;
 
     /**
      * Makes sure all tests share the same session ID by setting sessionId if it does not exist yet.

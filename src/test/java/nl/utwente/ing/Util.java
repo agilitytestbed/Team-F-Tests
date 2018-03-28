@@ -40,8 +40,8 @@ public class Util {
      *
      * @return a newly generated session ID
      */
-    public static int getSessionID() {
-        return Integer.parseInt(post("api/v1/sessions")
+    public static String getSessionID() {
+        return post("api/v1/sessions")
                 .then()
                 .assertThat()
                 .body(matchesJsonSchema(SESSION_SCHEMA_PATH.toAbsolutePath().toUri()))
@@ -50,10 +50,10 @@ public class Util {
                 .response()
                 .getBody()
                 .jsonPath()
-                .getString("id"));
+                .getString("id");
     }
 
-    public static int createTestCategory(String name, int sessionId) {
+    public static int createTestCategory(String name, String sessionId) {
         return given()
                 .header("X-session-ID", sessionId)
                 .body(String.format("{\"name\": \"%s\"}", name))
@@ -69,7 +69,7 @@ public class Util {
                 .getInt("id");
     }
 
-    public static void deleteTestCategory(int id, int sessionId) {
+    public static void deleteTestCategory(int id, String sessionId) {
         given()
                 .header("X-session-ID", sessionId)
                 .delete(String.format("api/v1/categories/%d", id));
