@@ -330,6 +330,24 @@ public class TransactionTests {
     /**
      * Performs a GET request on the transactions/{transactionId} endpoint.
      *
+     * This test uses an different, valid session ID to test whether the server responds with the correct response code.
+     */
+    @Test
+    public void differentSessionTransactionIdGetTest() {
+        // Insert a transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        given()
+                .header("X-session-id", Util.getSessionID())
+                .get(String.format("api/v1/transactions/%d", testTransactionId))
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a GET request on the transactions/{transactionId} endpoint.
+     *
      * This test uses an invalid session ID to test whether the server responds with the correct response code.
      */
     @Test
@@ -461,6 +479,32 @@ public class TransactionTests {
     /**
      * Performs a PUT request on the transactions/{transactionId} endpoint
      *
+     * This test uses a different, valid session ID with an invalid transaction to test whether the server gives
+     * the correct response.
+     */
+    @Test
+    public void differentSessionInvalidTransactionPutTest() {
+        //Insert valid transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        String newTransaction = "{" +
+                "\"date\": \"2018-03-25T12:49:04.749Z\", " +
+                "\"amount\": \"213.04\", " +
+                "\"externalIBAN\": \"DIFFERENT\", " +
+                "\"type\": \"deposit\" }";
+
+        given()
+                .header("X-session-ID", Util.getSessionID())
+                .body(newTransaction)
+                .put(String.format("api/v1/transactions/%d", testTransactionId))
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a PUT request on the transactions/{transactionId} endpoint
+     *
      * This test uses an invalid session ID to test whether the server gives the correct response.
      */
     @Test
@@ -516,7 +560,26 @@ public class TransactionTests {
     /**
      * Performs a DELETE request on the transactions/{transactionId} endpoint
      *
-     * This test uses an invalid session ID with a valid transaction ID to test whether the server corresponds with
+     * This test uses a different, valid ID with a valid transaction ID owned by a different user to test whether
+     * the server responds with the correct response code.
+     */
+    @Test
+    public void differentSessionValidTransactionIdDeleteTest() {
+        // Insert a transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        given()
+                .header("X-session-id", Util.getSessionID())
+                .delete(String.format("api/v1/transactions/%d", testTransactionId))
+                .then()
+                .assertThat()
+                .statusCode(404);
+    }
+
+    /**
+     * Performs a DELETE request on the transactions/{transactionId} endpoint
+     *
+     * This test uses an invalid session ID with a valid transaction ID to test whether the server responds with
      * the correct response code.
      */
     @Test
@@ -556,7 +619,7 @@ public class TransactionTests {
      * Performs a PATCH request on the transactions/{transactionId}/category endpoint
      *
      * This test uses a valid session ID with a valid transaction ID and a valid category ID to test whether the
-     * specified transaction is deleted.
+     * category of the specified transaction is updated.
      */
     @Test
     public void validSessionValidTransactionIdValidCategoryIdPatchTest() {
@@ -576,6 +639,26 @@ public class TransactionTests {
                 .get("category.id");
 
         assertEquals(testCategoryId.intValue(), categoryId);
+    }
+
+    /**
+     * Performs a PATCH request on the transactions/{transactionId}/category endpoint
+     *
+     * This test uses a different, valid session ID with a valid transaction ID and a valid category ID to test
+     * whether the server responds with the correct response code.
+     */
+    @Test
+    public void differentSessionValidTransactionIdValidCategoryIdPatchTest() {
+        // Insert a transaction into the API.
+        validSessionValidTransactionPostTest();
+
+        given()
+                .header("X-session-id", Util.getSessionID())
+                .body(String.format(TEST_CATEGORY_INPUT_FORMAT, testCategoryId))
+                .patch(String.format("api/v1/transactions/%d/category", testTransactionId))
+                .then()
+                .assertThat()
+                .statusCode(404);
     }
 
     /**
