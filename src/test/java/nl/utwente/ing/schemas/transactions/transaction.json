@@ -12,7 +12,7 @@
     },
     "amount": {
       "description": "The amount of this transaction",
-      "type": "string"
+      "type": "number"
     },
     "externalIBAN": {
       "type": "string"

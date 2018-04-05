@@ -58,7 +58,7 @@ public class TransactionTests {
     private static final String TEST_TRANSACTION_INPUT_FORMAT =
                     "{" +
                     "\"date\": \"1889-04-20T19:45:04.030Z\", " +
-                    "\"amount\": 0, " +
+                    "\"amount\": 213.12, " +
                     "\"externalIBAN\": \"string\", " +
                     "\"type\": \"deposit\", " +
                     "\"category\": {" +
@@ -167,7 +167,7 @@ public class TransactionTests {
 
         String clutterTransaction = String.format("{" +
                 "\"date\": \"1889-04-20T19:45:04.030Z\", " +
-                "\"amount\": 42, " +
+                "\"amount\": 23.53, " +
                 "\"externalIBAN\": \"something\", " +
                 "\"type\": \"deposit\", " +
                 "\"category\": {" +
@@ -416,7 +416,7 @@ public class TransactionTests {
 
         String newTransaction = "{" +
                 "\"date\": \"2018-03-25T12:49:04.749Z\", " +
-                "\"amount\": \"213,04\", " +
+                "\"amount\": \"213.04\", " +
                 "\"externalIBAN\": \"DIFFERENT\", " +
                 "\"type\": \"deposit\" }";
 
